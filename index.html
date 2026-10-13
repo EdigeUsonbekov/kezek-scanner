@@ -148,6 +148,8 @@ body {
 </div>
 
 <script>
+const BOT_USERNAME = "kezek_service_bot"; // Юзернейм вашего бота без @
+
 const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
@@ -167,7 +169,7 @@ function setStatus(text, isError=false) {
 
 function extractEstId(data) {
   if (!data) return null;
-  data = data.trim();
+  data = String(data).trim();
   let m = data.match(/est_(\d+)/i);
   if (m) return parseInt(m[1], 10);
   m = data.match(/start(?:app)?=est_(\d+)/i);
@@ -255,6 +257,11 @@ function onScanSuccess(decodedText, decodedResult) {
   const resultId = document.getElementById('resultId');
   const resultRaw = document.getElementById('resultRaw');
   
+  // Принудительно скрываем старую Telegram MainButton, чтобы не было дубликатов
+  if (tg?.MainButton) {
+    tg.MainButton.hide();
+  }
+
   if (!estId) {
     setStatus("ID заведения не найден в ссылке", true);
     resultRaw.textContent = decodedText.slice(0, 200);
@@ -269,41 +276,44 @@ function onScanSuccess(decodedText, decodedResult) {
   resultId.textContent = `ID заведения: ${estId}`;
   resultRaw.textContent = decodedText.slice(0, 200);
   resultBox.classList.add('show');
-  setStatus(`✅ Найдено: ${estId}`);
+  setStatus(`✅ Найдено заведение: #${estId}`);
   stopCamera();
   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-  if (tg?.MainButton) {
-    tg.MainButton.setText(`Перейти к заведению ${estId}`);
-    tg.MainButton.show();
-    tg.MainButton.onClick(sendToBot);
-  }
 }
 
 function sendToBot() {
-  if (!lastEstId && !lastDecoded) {
+  const estId = lastEstId || extractEstId(lastDecoded);
+  if (!estId) {
     setStatus("Сначала отсканируй QR или вставь ссылку", true);
     return;
   }
-  const payload = lastEstId ? { est_id: lastEstId, qr_data: lastDecoded } : { qr_data: lastDecoded };
-  const jsonStr = JSON.stringify(payload);
+
+  const payload = JSON.stringify({ est_id: estId, qr_data: lastDecoded });
+  let sent = false;
+
+  // Пробуем отправить данные через встроенный sendData
   if (tg && tg.sendData) {
     try {
-      tg.sendData(jsonStr);
-      setStatus("Отправлено в бота...");
-      if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+      tg.sendData(payload);
+      sent = true;
     } catch (e) {
-      if (tg.openTelegramLink) {
-        const link = `https://t.me/kezek_service_bot?start=est_${lastEstId}`;
-        tg.openTelegramLink(link);
-      }
+      console.warn("sendData error:", e);
     }
-  } else {
-    const estId = lastEstId || extractEstId(lastDecoded);
-    if (estId) {
-      const link = `https://t.me/kezek_service_bot?start=est_${estId}`;
-      window.open(link, '_blank');
-      setStatus(`Открываю: ${link}`);
+  }
+
+  // Если sendData недоступен/ошибка, делаем переход через официальную ссылку бота с параметром start
+  if (!sent) {
+    const deepLink = `https://t.me/${BOT_USERNAME}?start=est_${estId}`;
+    if (tg && tg.openTelegramLink) {
+      tg.openTelegramLink(deepLink);
+    } else {
+      window.location.href = deepLink;
     }
+  }
+
+  // Закрываем Mini App
+  if (tg && tg.close) {
+    setTimeout(() => tg.close(), 200);
   }
 }
 
@@ -313,7 +323,6 @@ function resetScanner() {
   document.getElementById('resultBox').classList.remove('show');
   document.getElementById('linkInput').value = "";
   setStatus("Нажми Старт для нового скана");
-  if (tg?.MainButton) tg.MainButton.hide();
   document.getElementById('startBtn').disabled = false;
 }
 
