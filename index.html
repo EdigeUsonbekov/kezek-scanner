@@ -1,86 +1,40 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Kezek Scanner</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<style>
-:root { --bg: var(--tg-theme-bg-color, #0f0f0f); --text: var(--tg-theme-text-color, #ffffff); --hint: var(--tg-theme-hint-color, #8a8a8a); --button: var(--tg-theme-button-color, #2ea6ff); --button-text: var(--tg-theme-button-text-color, #ffffff); --secondary-bg: var(--tg-theme-secondary-bg-color, #1c1c1e); }
-* { box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; }
-.container { width: 100%; max-width: 420px; }.header { text-align: center; padding: 12px 0 18px; }.header h1 { font-size: 22px; font-weight: 700; }.header p { font-size: 14px; color: var(--hint); margin-top: 6px; }
-.card { background: var(--secondary-bg); border-radius: 16px; padding: 14px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.08); }
-#reader { width: 100%; border-radius: 12px; overflow: hidden; background: #000; min-height: 260px; position: relative; } #reader video { border-radius: 12px; }
-.controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }.btn { height: 48px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }.btn-primary { background: var(--button); color: var(--button-text); }.btn-secondary { background: rgba(255,255,255,0.1); color: var(--text); }.btn:disabled { opacity:.45; }.btn-full { grid-column: 1 / -1; }
-.status { margin-top: 12px; font-size: 13px; color: var(--hint); text-align: center; min-height: 18px; }.result { display: none; padding: 16px; text-align: center; }.result.show { display: block; }.result.id-badge { display: inline-block; background: var(--button); color: var(--button-text); padding: 6px 14px; border-radius: 99px; font-weight: 700; font-size: 15px; margin: 10px 0; }
-.link-input { flex: 1; height: 48px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: var(--text); padding: 0 14px; font-size: 14px; outline: none; }
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="header"><h1>📷 Kezek Scanner</h1><p>Наведи камеру на QR заведения</p></div>
-  <div class="card">
-    <div id="reader"></div>
-    <div class="status" id="status">Нажми "Запустить камеру"</div>
-    <div class="controls">
-      <button class="btn btn-primary" id="startBtn" onclick="startCamera()">▶️ Старт</button>
-      <button class="btn btn-secondary" id="stopBtn" onclick="stopCamera()" disabled>⏹ Стоп</button>
-      <button class="btn btn-secondary btn-full" onclick="openGallery()">🖼 Галерея</button>
-      <input type="file" id="galleryInput" style="display:none" accept="image/*" onchange="handleGalleryFile(this)">
-    </div>
-    <div style="display:flex; gap:8px; margin-top:12px"><input type="text" id="linkInput" class="link-input" placeholder="Вставь ссылку: t.me/...est_123 или 123" onkeydown="if(event.key==='Enter') handleLinkInput()"><button class="btn btn-primary" style="width:56px;" onclick="handleLinkInput()">➡️</button></div>
-  </div>
-  <div class="card result" id="resultBox"><div style="font-size:48px">✅</div><h2>QR считан!</h2><div class="id-badge" id="resultId">ID:...</div><div id="resultRaw" style="font-size:11px; opacity:.6; word-break:break-all"></div><div class="controls" style="margin-top:14px"><button class="btn btn-primary btn-full" onclick="sendToBot()">⚡️ Перейти к записи</button><button class="btn btn-secondary btn-full" onclick="resetScanner()">🔁 Еще</button></div><div id="apiStatus" style="font-size:11px; margin-top:8px; opacity:.7"></div></div>
-</div>
 <script>
-// --- ВАЖНО: СЮДА ВСТАВЛЯЙ АКТУАЛЬНУЮ ССЫЛКУ ИЗ public_url.txt ---
-const API_URL = "https://31fd83402eb8c364-46-251-198-144.serveousercontent.com";
-const BOT_USERNAME = "kezek_service_bot";
+// ЗАМЕНИ ТОЛЬКО ФУНКЦИЮ startCamera НА ЭТУ В ТВОЕМ ФАЙЛЕ:
 
-const tg = window.Telegram?.WebApp;
-if (tg) { tg.ready(); tg.expand(); }
+async function startCamera() {
+  const tg = window.Telegram?.WebApp;
 
-let html5QrCode = null, lastDecoded = null, lastEstId = null;
-function setStatus(t, e=false){ document.getElementById('status').textContent=t; document.getElementById('status').style.color=e?'#ff4d4d':'var(--hint)'; }
-function extractEstId(data){ if(!data) return null; data=String(data).trim(); let m=data.match(/est_(\d+)/i); if(m) return parseInt(m[1]); m=data.match(/start(?:app)?=est_(\d+)/i); if(m) return parseInt(m[1]); if(/^\d+$/.test(data)) return parseInt(data); return null; }
+  // СПОСОБ 1: Родной сканер Telegram (работает 100% внутри бота)
+  if (tg && tg.showScanQrPopup) {
+    setStatus("Открываю сканер Telegram...");
+    tg.showScanQrPopup(
+      { text: "Наведи на QR заведения" },
+      (text) => {
+        tg.closeScanQrPopup();
+        onScanSuccess(text);
+        return true; // закрываем попап
+      }
+    );
+    return;
+  }
 
-async function startCamera(){
-  if(!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-  setStatus("Запрашиваю камеру...");
-  try{ await html5QrCode.start({facingMode:"environment"}, {fps:10, qrbox:{width:250,height:250}}, onScanSuccess, ()=>{}); document.getElementById('startBtn').disabled=true; document.getElementById('stopBtn').disabled=false; setStatus("Наведи на QR..."); }catch(err){ setStatus("Ошибка камеры: "+err.message, true); }
+  // СПОСОБ 2: Fallback через камеру браузера (для теста вне Telegram)
+  if (!html5QrCode) {
+    html5QrCode = new Html5Qrcode("reader");
+  }
+  setStatus("Запрашиваю доступ к камере...");
+  try {
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      onScanSuccess,
+      ()=>{}
+    );
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('stopBtn').disabled = false;
+    setStatus("Наведи на QR...");
+  } catch (err) {
+    setStatus("Ошибка камеры: " + err.message + " | Попробуй открыть через Telegram", true);
+  }
 }
-async function stopCamera(){ if(html5QrCode?.isScanning){ try{ await html5QrCode.stop(); }catch(e){} } document.getElementById('startBtn').disabled=false; document.getElementById('stopBtn').disabled=true; setStatus("Камера остановлена"); }
-function openGallery(){ document.getElementById('galleryInput').click(); }
-async function handleGalleryFile(input){ if(!input.files[0]) return; setStatus("Читаю фото..."); if(!html5QrCode) html5QrCode = new Html5Qrcode("reader"); if(html5QrCode.isScanning) await html5QrCode.stop().catch(()=>{}); try{ const d = await html5QrCode.scanFile(input.files[0], true); onScanSuccess(d); }catch(e){ setStatus("QR на фото не найден", true); } input.value=""; }
-function handleLinkInput(){ const v=document.getElementById('linkInput').value.trim(); if(!v) return setStatus("Вставь ссылку", true); onScanSuccess(v); }
-
-async function onScanSuccess(decodedText){
-  if(lastDecoded===decodedText) return; lastDecoded=decodedText;
-  const estId = extractEstId(decodedText);
-  if(!estId){ setStatus("ID не найден", true); document.getElementById('resultBox').classList.add('show'); document.getElementById('resultId').textContent="❓ Неизвестный формат"; return; }
-  lastEstId=estId; document.getElementById('resultId').textContent=`ID заведения: ${estId}`; document.getElementById('resultRaw').textContent=decodedText.slice(0,200); document.getElementById('resultBox').classList.add('show'); setStatus(`✅ Найдено: #${estId}`); stopCamera();
-
-  // Проверяем API через публичную ссылку (https, а не 127.0.0.1)
-  try{
-    document.getElementById('apiStatus').textContent="Проверяю API...";
-    const r = await fetch(`${API_URL}/establishment/${estId}`, {method:'GET'});
-    if(r.ok){ const j=await r.json(); document.getElementById('apiStatus').textContent=`✅ Заведение: ${j.name||estId} - готово к записи`; }
-    else{ document.getElementById('apiStatus').textContent=`API ответ: ${r.status} (заведение ${estId} не в базе, но можно записать)`; }
-  }catch(e){ document.getElementById('apiStatus').textContent=`⚠️ API недоступен: ${e.message}. Проверь что./start.sh запущен`; console.error(e); }
-}
-
-function sendToBot(){
-  const estId = lastEstId; if(!estId) return setStatus("Сначала отсканируй", true);
-  const payload = JSON.stringify({est_id: estId, qr_data: lastDecoded});
-  if(tg?.sendData){ try{ tg.sendData(payload); }catch(e){} }
-  const deepLink = `https://t.me/${BOT_USERNAME}?start=est_${estId}`;
-  if(tg?.openTelegramLink) tg.openTelegramLink(deepLink); else window.location.href=deepLink;
-  setTimeout(()=>tg?.close(), 300);
-}
-function resetScanner(){ lastDecoded=null; lastEstId=null; document.getElementById('resultBox').classList.remove('show'); setStatus("Нажми Старт"); document.getElementById('startBtn').disabled=false; }
-window.addEventListener('load', ()=>{ if(tg) setTimeout(startCamera, 500); });
 </script>
-</body>
-</html>
