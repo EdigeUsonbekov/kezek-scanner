@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>kezek</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='black'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='900' font-size='42' fill='white'>kezek</text></svg>">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F5F5F7;--card:#FFFFFF;--text:#111111;--text-2:#6E6E73;--border:rgba(0,0,0,0.08);--btn-primary:#000000;--btn-primary-text:#FFFFFF;--btn-secondary:#E8E8ED;--btn-secondary-text:#1D1D1F}
+@media (prefers-color-scheme: dark){:root{--bg:#0A0A0B;--card:#1C1C1E;--text:#F5F5F7;--text-2:#9A9AA0;--border:rgba(255,255,255,0.10);--btn-primary:#FFFFFF;--btn-primary-text:#000000;--btn-secondary:#2C2C2E;--btn-secondary-text:#F5F5F7}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,SF Pro Display,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+.app{max-width:420px;margin:0 auto;padding:24px 20px 32px;min-height:100vh;display:flex;flex-direction:column}
+.view{display:none;flex-direction:column;flex:1}
+.view.active{display:flex}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 0}
+.logo{font-size:56px;font-weight:900;letter-spacing:-3px;line-height:1;text-transform:lowercase;color:var(--text)}
+.slogan{margin-top:14px;font-size:15px;font-weight:500;color:var(--text-2);letter-spacing:0.2px}
+.btn{width:100%;border:none;border-radius:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform 0.15s ease,opacity 0.15s ease;user-select:none}
+.btn:active{transform:scale(0.96)}
+.btn-primary{background:var(--btn-primary);color:var(--btn-primary-text);box-shadow:0 8px 24px rgba(0,0,0,0.12)}
+.btn-secondary{background:var(--btn-secondary);color:var(--btn-secondary-text)}
+.btn-big{height:76px;font-size:20px}
+.btn-large{height:68px;font-size:19px}
+.btn-medium{height:60px;font-size:17px}
+.btn-scan{height:64px;font-size:18px}
+.btn-pulse{animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,0,0,0.18),0 8px 24px rgba(0,0,0,0.12)}70%{box-shadow:0 0 0 14px rgba(0,0,0,0),0 8px 24px rgba(0,0,0,0.12)}100%{box-shadow:0 0 0 0 rgba(0,0,0,0),0 8px 24px rgba(0,0,0,0.12)}}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.back{width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text);cursor:pointer}
+.title{font-size:20px;font-weight:700;letter-spacing:-0.3px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:16px}
+.reader-wrap{width:100%;aspect-ratio:1;max-width:340px;margin:0 auto;border-radius:24px;overflow:hidden;background:#000;border:2px solid var(--text);position:relative}
+#reader{width:100%;height:100%}
+#reader video{width:100%!important;height:100%!important;object-fit:cover}
+.status{margin-top:16px;font-size:14px;font-weight:500;color:var(--text-2);text-align:center;line-height:1.4;padding:0 12px}
+.row{display:flex;gap:10px}
+.input{flex:1;height:56px;border-radius:16px;border:1px solid var(--border);background:var(--card);color:var(--text);padding:0 16px;font-size:15px;outline:none}
+.input::placeholder{color:var(--text-2)}
+.small-btn{width:56px;height:56px;border-radius:16px;background:var(--btn-primary);color:var(--btn-primary-text);border:none;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.master-card{display:flex;align-items:center;justify-content:space-between;padding:18px 18px;border-radius:18px;background:var(--card);border:1px solid var(--border);cursor:pointer;transition:transform 0.12s}
+.master-card:active{transform:scale(0.98)}
+.master-left{display:flex;align-items:center;gap:12px}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot-green{background:#30D158}
+.dot-orange{background:#FF9F0A}
+.master-name{font-weight:700;font-size:16px}
+.master-meta{font-size:13px;color:var(--text-2);margin-top:2px}
+.master-queue{font-size:14px;font-weight:600;color:var(--text)}
+.big-title{font-size:28px;font-weight:800;letter-spacing:-1px;text-align:center;margin:12px 0 24px;line-height:1.1}
+.time-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.weekday-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.weekday-grid .btn{height:56px}
+.calendar{margin-top:12px}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-month{font-size:18px;font-weight:800}
+.cal-nav{width:36px;height:36px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px}
+.cal-wd{font-size:15px;font-weight:700;color:var(--text-2);text-align:center;padding:6px 0;letter-spacing:0.3px}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.cal-day{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;cursor:pointer;transition:all 0.15s;background:var(--card);border:1px solid var(--border);color:var(--text);margin:0 auto}
+.cal-day.other{opacity:0.25;pointer-events:none}
+.cal-day.today{border:2px solid var(--text)}
+.cal-day.selected{background:var(--btn-primary);color:var(--btn-primary-text);border-color:var(--btn-primary);font-weight:700}
+.queue-item{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;background:var(--bg);border:1px solid var(--border);margin-bottom:8px}
+.sheet{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-radius:24px 24px 0 0;border-top:1px solid var(--border);padding:20px 20px 36px;transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);z-index:100}
+.sheet.open{transform:translateY(0)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.32);opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:99}
+.overlay.open{opacity:1;pointer-events:auto}
+.service-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.empty{padding:40px 20px;text-align:center;color:var(--text-2)}
+.person-icon{width:28px;height:28px;border-radius:50%;background:var(--btn-secondary);display:flex;align-items:center;justify-content:center;color:var(--text-2);flex-shrink:0}
+.person-icon svg{width:16px;height:16px}
+.next-wrap{position:relative;overflow:visible}
+.confetti-piece{position:absolute;left:50%;top:50%;pointer-events:none;z-index:20}
+.rect{width:12px;height:8px;background:#B8F0B8;border-radius:2px}
+.circle{width:10px;height:10px;background:#FFEC8B;border-radius:50%}
+@keyframes confetti-fly{0%{transform:translate(-50%,-50%) rotate(0deg) scale(1);opacity:1}100%{transform:translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) scale(0);opacity:0}}
+@keyframes next-ring{0%{box-shadow:0 0 0 0 rgba(88,204,88,0.5)}70%{box-shadow:0 0 0 18px rgba(88,204,88,0)}100%{box-shadow:0 0 0 0 rgba(88,204,88,0)}}
+.btn-next-anim{animation:next-ring 0.8s ease-out}
+.loader{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.qr-modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+.qr-modal.open{display:flex}
+.qr-box{background:var(--card);border-radius:24px;padding:24px;max-width:340px;width:100%;text-align:center}
+.pwa-gate{position:fixed;inset:0;z-index:300;background:var(--bg);display:none;flex-direction:column;padding:32px 24px;overflow:auto}
+.pwa-gate.open{display:flex}
+.pwa-icon{width:96px;height:96px;border-radius:28px;background:#000;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:32px;letter-spacing:-2px;margin:0 auto 24px;box-shadow:0 20px 40px rgba(0,0,0,0.2)}
+.pwa-title{font-size:34px;font-weight:900;letter-spacing:-1.5px;text-align:center;line-height:0.95}
+.pwa-sub{margin-top:14px;font-size:16px;color:var(--text-2);text-align:center;line-height:1.4}
+.pwa-card{margin-top:28px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:18px}
+.pwa-step{display:flex;gap:12px;margin-bottom:14px}
+.pwa-step:last-child{margin-bottom:0}
+.pwa-num{width:28px;height:28px;border-radius:50%;background:var(--btn-primary);color:var(--btn-primary-text);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+.pwa-step-text{font-size:14px;line-height:1.4}
+.pwa-step-text b{font-weight:700}
+.loud-modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:none;align-items:center;justify-content:center;z-index:500;padding:20px}
+.loud-modal.open{display:flex;animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.loud-box{background:var(--card);border-radius:32px;padding:28px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.5);transform:scale(0.9);animation:loudPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275) forwards}
+@keyframes loudPop{to{transform:scale(1)}}
+.loud-bell{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#FF3B30,#FF9500);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:44px;animation:bellShake 0.6s infinite;box-shadow:0 12px 32px rgba(255,59,48,0.4)}
+@keyframes bellShake{0%,100%{transform:rotate(0deg)}10%{transform:rotate(-12deg)}20%{transform:rotate(12deg)}30%{transform:rotate(-10deg)}40%{transform:rotate(10deg)}50%{transform:rotate(-6deg)}60%{transform:rotate(6deg)}}
+.loud-title{font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1}
+.loud-sub{margin-top:10px;font-size:16px;color:var(--text-2);line-height:1.4}
+.loud-master{margin-top:12px;font-size:20px;font-weight:800}
+.loud-progress{margin-top:18px;height:6px;background:var(--btn-secondary);border-radius:99px;overflow:hidden}
+.loud-progress-bar{height:100%;background:linear-gradient(90deg,#30D158,#00C7BE);width:100%;animation:progressShrink 1.5s linear infinite}
+@keyframes progressShrink{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.loud-btn{margin-top:20px;height:64px;font-size:20px;font-weight:900;border-radius:20px;letter-spacing:-0.3px}
+.loud-hint{margin-top:12px;font-size:12px;color:var(--text-2)}
+.code-badge{display:inline-flex;align-items:center;gap:6px;background:var(--btn-secondary);border-radius:99px;padding:6px 10px;font-size:12px;font-weight:700;letter-spacing:0.5px}
+.stack{display:flex;flex-direction:column;gap:12px;width:100%;margin-top:48px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="pwa-gate" id="pwaGate">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:400px;margin:0 auto;width:100%">
+    <div class="pwa-icon">kezek</div>
+    <div class="pwa-title">Установи<br>приложение</div>
+    <div class="pwa-sub">Чтобы не пропустить очередь,<br>уведомления работают только в установленном PWA</div>
+    <div class="pwa-card" id="pwaInstallCard">
+      <div class="pwa-step"><div class="pwa-num">1</div><div class="pwa-step-text"><b>Нажми "Установить"</b><br>Добавь kezek на главный экран</div></div>
+      <div class="pwa-step"><div class="pwa-num">2</div><div class="pwa-step-text"><b>Разреши уведомления</b><br>Мы разбудим даже если телефон в кармане</div></div>
+      <div class="pwa-step"><div class="pwa-num">3</div><div class="pwa-step-text"><b>Громкий звук + вибрация</b><br>Невозможно не услышать 🔔</div></div>
+    </div>
+    <div id="iosInstructions" style="display:none" class="pwa-card">
+      <div style="font-weight:800;margin-bottom:8px">На iPhone:</div>
+      <div style="font-size:14px;line-height:1.5">Нажми <b>Поделиться ⎙</b> внизу экрана → <b>На экран "Домой"</b> → <b>Добавить</b></div>
+    </div>
+    <div class="stack" style="margin-top:24px">
+      <button class="btn btn-primary btn-big btn-pulse" id="pwaInstallBtn" onclick="installPWA()">📲 Установить kezek</button>
+      <button class="btn btn-secondary btn-medium" id="pwaManualBtn" style="display:none" onclick="showManualInstall()">Как установить вручную</button>
+      <button class="btn" style="background:none;color:var(--text-2);font-size:13px;height:40px" onclick="continueWithoutPWA()">Продолжить в браузере →<br><span style="font-size:11px">⚠️ без громких уведомлений</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="view active" id="view-home">
+  <div class="center">
+    <div class="logo">kezek</div>
+    <div class="slogan">Очередь без ожидания.</div>
+    <div style="margin-top:14px" class="code-badge" id="clientCodeBadge"></div>
+    <div id="apiSettings" style="display:none;margin-top:16px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;width:100%">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px">⚙️ Сервер (телефон через serveo)</div>
+      <div class="row"><input class="input" id="apiUrlInput" placeholder="https://xxxx.serveo.net/api" style="height:44px;font-size:13px"><button class="small-btn" style="width:44px;height:44px" onclick="saveApiUrl()">✓</button></div>
+      <div style="font-size:11px;color:var(--text-2);margin-top:6px">Вставь ссылку serveo + /api<br>Пример: https://kezek.serveo.net/api<br>Можно передать через ?api=ссылка</div>
+      <div id="apiStatus" style="font-size:11px;margin-top:6px"></div>
+    </div>
+    <div class="stack">
+      <button class="btn btn-primary btn-big btn-pulse" onclick="goClient()">Записаться к специалисту</button>
+      <button class="btn btn-secondary" style="height:52px;font-size:15px;font-weight:600;width:68%;margin:0 auto;border-radius:16px" onclick="handleSpecialistEntry()">Я специалист</button>
+    </div>
+    <div style="margin-top:20px;text-align:center"><button class="btn" style="background:none;color:var(--text-2);font-size:13px;height:auto;padding:8px" onclick="requestNotificationPermission()">🔔 Включить громкие уведомления</button></div>
+  </div>
+</div>
+
+<div class="view" id="view-scanner">
+  <div class="header"><div class="back" onclick="stopCamera();showView('view-home')">‹</div><div class="title">Сканер</div></div>
+  <div class="reader-wrap"><div id="reader"></div></div>
+  <div class="status" id="scan-status">Запускаю камеру...</div>
+  <div class="stack" style="margin-top:20px">
+    <button class="btn btn-primary btn-scan" id="scanBtn" onclick="toggleCamera()">Остановить</button>
+    <button class="btn" style="background:none;color:var(--text-2);font-size:14px;font-weight:600;text-decoration:underline;height:40px;margin-top:4px" onclick="toggleAltOptions()">Не нашел QR код?</button>
+    <div id="altOptions" style="display:none;flex-direction:column;gap:12px;margin-top:4px">
+      <div class="row"><input class="input" id="linkInput" placeholder="Вставьте ссылку или ID заведения." onkeydown="if(event.key==='Enter') handleLinkInput()"><button class="small-btn" onclick="handleLinkInput()">→</button></div>
+      <button class="btn btn-secondary btn-medium" onclick="openGallery()">Найти QR в галерее</button>
+    </div>
+    <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleGalleryFile(this)">
+    <button class="btn btn-secondary btn-medium" style="margin-top:12px" onclick="showView('view-history');renderHistory()">📍 Где я был</button>
+  </div>
+</div>
+
+<div class="view" id="view-history">
+  <div class="header"><div class="back" onclick="showView('view-scanner')">‹</div><div class="title">Вы посещали</div></div>
+  <div class="row" style="margin-bottom:16px"><button class="btn btn-secondary" style="flex:1;height:44px;border-radius:12px" id="incognitoBtn" onclick="toggleIncognito()">🕶 Инкогнито</button><button class="btn btn-secondary" style="flex:1;height:44px;border-radius:12px" onclick="clearHistory()">🗑 Очистить</button></div>
+  <div id="historyList"></div>
+</div>
+
+<div class="view" id="view-est">
+  <div class="header"><div class="back" onclick="stopCamera();showView('view-scanner')">‹</div><div class="title" id="estTitle">Заведение</div></div>
+  <div id="estInfo" class="card" style="margin-bottom:16px;display:none"></div>
+  <div id="nameBlock" class="card" style="margin-bottom:12px;display:flex;gap:10px;align-items:center">
+    <div class="person-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 16c0-3 2.7-5.5 6-5.5S16 13 16 16" stroke-linecap="round"/></svg></div>
+    <input id="clientNameInput" class="input" style="flex:1;height:44px" placeholder="Ваше имя для очереди">
+  </div>
+  <div id="mastersList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px"></div>
+  <div id="bookingType" style="display:none"><div class="big-title">Записаться на</div><div class="stack" style="margin-top:0"><button class="btn btn-primary btn-large" onclick="bookNearest()">Ближайшее</button><button class="btn btn-secondary btn-large" onclick="showView('view-future')">На будущее</button></div></div>
+</div>
+
+<div class="view" id="view-future">
+  <div class="header"><div class="back" onclick="showView('view-est')">‹</div><div class="title">Когда?</div></div>
+  <div class="stack" style="margin-top:12px"><button class="btn btn-primary btn-large" onclick="selectTomorrow()">Завтра</button><button class="btn btn-secondary btn-large" onclick="showView('view-weekday')">День недели</button><button class="btn btn-secondary btn-large" onclick="showCalendar()">Конкретный месяц</button></div>
+</div>
+
+<div class="view" id="view-time">
+  <div class="header"><div class="back" onclick="goBackFromTime()">‹</div><div class="title" id="timeTitle">Во сколько?</div></div>
+  <div class="time-grid"><button class="btn btn-secondary btn-medium" onclick="bookTime('morning')">Утром (09:00)</button><button class="btn btn-secondary btn-medium" onclick="bookTime('day')">Днем (13:00)</button><button class="btn btn-secondary btn-medium" onclick="bookTime('noon')">В полдень (15:00)</button><button class="btn btn-secondary btn-medium" onclick="bookTime('evening')">Вечером (18:00)</button><button class="btn btn-secondary btn-medium" onclick="bookTime('late')">Поздним вечером (20:30)</button></div>
+</div>
+
+<div class="view" id="view-weekday">
+  <div class="header"><div class="back" onclick="showView('view-future')">‹</div><div class="title">День недели</div></div>
+  <div class="weekday-grid"><button class="btn btn-secondary" onclick="selectWeekday(1)">Пн</button><button class="btn btn-secondary" onclick="selectWeekday(2)">Вт</button><button class="btn btn-secondary" onclick="selectWeekday(3)">Ср</button><button class="btn btn-secondary" onclick="selectWeekday(4)">Чт</button><button class="btn btn-secondary" onclick="selectWeekday(5)">Пт</button><button class="btn btn-secondary" onclick="selectWeekday(6)">Сб</button><button class="btn btn-secondary" style="grid-column:span 2" onclick="selectWeekday(0)">Вс</button></div>
+</div>
+
+<div class="view" id="view-calendar">
+  <div class="header"><div class="back" onclick="showView('view-future')">‹</div><div class="title">Выберите дату</div></div>
+  <div class="calendar"><div class="cal-header"><div class="cal-nav" onclick="changeMonth(-1)">‹</div><div class="cal-month" id="calMonth"></div><div class="cal-nav" onclick="changeMonth(1)">›</div></div><div class="cal-weekdays"><div class="cal-wd">Пн</div><div class="cal-wd">Вт</div><div class="cal-wd">Ср</div><div class="cal-wd">Чт</div><div class="cal-wd">Пт</div><div class="cal-wd">Сб</div><div class="cal-wd">Вс</div></div><div class="cal-days" id="calDays"></div></div>
+  <div id="calTimeBlock" style="display:none;margin-top:20px"><div class="big-title" style="font-size:20px;margin-bottom:12px">Во сколько?</div><div class="time-grid"><button class="btn btn-secondary btn-medium" onclick="bookTime('morning')">Утром (09:00)</button><button class="btn btn-secondary btn-medium" onclick="bookTime('day')">Днем (13:00)</button><button class="btn btn-secondary btn-medium" onclick="bookTime('noon')">В полдень (15:00)</button><button class="btn btn-secondary btn-medium" onclick="bookTime('evening')">Вечером (18:00)</button><button class="btn btn-secondary btn-medium" onclick="bookTime('late')">Поздним вечером (20:30)</button></div></div>
+</div>
+
+<div class="view" id="view-status">
+  <div class="center"><div style="font-size:72px">✅</div><div class="big-title" id="statusTitle">Вы в очереди</div><div id="statusInfo" style="text-align:center;color:var(--text-2);line-height:1.5"></div>
+  <div id="statusLive" class="card" style="margin-top:16px;display:none;width:100%;text-align:center"></div>
+  <div class="stack"><button class="btn btn-secondary btn-medium" onclick="cancelMyBooking()">Отменить запись</button><button class="btn btn-primary btn-large" onclick="showView('view-home')">Готово</button></div></div>
+</div>
+
+<div class="view" id="view-specialist-choice">
+  <div class="header"><div class="back" onclick="showView('view-home')">‹</div><div class="title">Специалист</div></div>
+  <div style="margin-top:8px;text-align:center"><div class="code-badge" id="masterCodeBadge"></div><div style="margin-top:8px;font-size:12px;color:var(--text-2)">Твой код мастера - хранится в телефоне</div></div>
+  <div class="stack" style="margin-top:20px">
+    <button class="btn btn-primary btn-large" onclick="showCreateFlow()">🏢 Создать бизнес</button>
+    <button class="btn btn-secondary btn-large" onclick="showJoinFlow()">💼 Присоединиться к бизнесу</button>
+  </div>
+</div>
+
+<div class="view" id="view-specialist-join">
+  <div class="header"><div class="back" onclick="showView('view-specialist-choice')">‹</div><div class="title">Создание бизнеса</div></div>
+  <div id="serviceStep"><div class="big-title" style="font-size:22px">Вид услуги</div><div class="service-grid" id="serviceGrid"></div><div id="customService" style="display:none;margin-top:12px"><input class="input" id="customServiceInput" placeholder="Ваша услуга"><button class="btn btn-primary btn-medium" style="margin-top:12px" onclick="submitCustomService()">Продолжить</button></div></div>
+  <div id="nameStep" style="display:none"><div class="big-title" style="font-size:22px">Название бизнеса</div><input class="input" id="businessNameInput" placeholder="Например: Barber King"><button class="btn btn-primary btn-large" style="margin-top:16px" onclick="submitBusinessName()">Продолжить</button></div>
+  <div id="timeStep" style="display:none"><div class="big-title" style="font-size:22px">Время на клиента</div><div class="service-grid" id="timeGrid"></div></div>
+  <div id="passwordStep" style="display:none"><div class="big-title" style="font-size:22px">Пароль заведения<br><span style="font-size:14px;font-weight:500;color:var(--text-2)">4 цифры для входа мастеров</span></div><input class="input" id="estPassInput" type="tel" maxlength="4" placeholder="••••" style="text-align:center;font-size:24px;letter-spacing:8px"><button class="btn btn-primary btn-large" style="margin-top:16px" id="createBusinessBtn" onclick="createBusiness()">Создать бизнес</button></div>
+</div>
+
+<div class="view" id="view-join-master">
+  <div class="header"><div class="back" onclick="showView('view-specialist-choice')">‹</div><div class="title">Вход мастера</div></div>
+  <div id="joinStep1"><div class="big-title" style="font-size:22px">Название бизнеса</div><input class="input" id="joinEstName" placeholder="Например: Barber King"><button class="btn btn-primary btn-large" style="margin-top:16px" onclick="submitJoinEstName()">Далее</button></div>
+  <div id="joinStep2" style="display:none"><div class="big-title" style="font-size:22px">Пароль<br><span style="font-size:14px;font-weight:500;color:var(--text-2)">4 цифры</span></div><input class="input" id="joinEstPass" type="tel" maxlength="4" placeholder="••••" style="text-align:center;font-size:24px;letter-spacing:8px"><button class="btn btn-primary btn-large" style="margin-top:16px" onclick="submitJoinEstPass()">Далее</button></div>
+  <div id="joinStep3" style="display:none"><div class="big-title" style="font-size:22px">Ваше имя как мастера</div><input class="input" id="joinMasterName" placeholder="Например: Арсен"><button class="btn btn-primary btn-large" style="margin-top:16px" onclick="submitJoinMaster()">Войти</button></div>
+</div>
+
+<div class="view" id="view-master">
+  <div class="header"><div class="title" id="masterHeader">Мастер</div><div style="margin-left:auto;display:flex;gap:8px"><div class="back" onclick="showView('view-home')">⌂</div></div></div>
+  <div class="card" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:8px"><div class="dot dot-green" id="masterDot"></div><div id="masterStatus" style="font-weight:700">Активен</div></div><div id="masterName" style="font-size:22px;font-weight:800;margin-top:8px"></div><div id="masterEstName" style="font-size:13px;color:var(--text-2);margin-top:4px"></div><div id="masterCodeDisplay" style="margin-top:8px" class="code-badge"></div></div>
+  <div class="next-wrap"><button class="btn btn-primary btn-large" style="height:72px;font-size:19px;position:relative;overflow:visible" onclick="nextClient()">Следующий клиент</button></div>
+  <div style="margin-top:20px;font-weight:700;font-size:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span>Очередь клиентов</span><button class="btn btn-secondary" style="width:auto;height:32px;border-radius:10px;font-size:12px;padding:0 12px" onclick="loadQueue()">Обновить</button></div>
+  <div id="clientList"></div>
+  <div id="blockedListWrap" style="margin-top:20px;display:none"><div style="font-weight:700;font-size:14px;margin-bottom:8px">🚫 Заблокированные (3 дня)</div><div id="blockedList"></div></div>
+  <div style="margin-top:auto;padding-top:20px"><button class="btn btn-secondary btn-large" onclick="openMoreSheet()">Еще •••</button></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeMoreSheet()"></div>
+<div class="sheet" id="moreSheet"><div style="width:40px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 20px"></div><div class="stack" style="margin-top:0"><button class="btn btn-secondary btn-large" onclick="getQR();closeMoreSheet()">🔗 Получить QR код</button><button class="btn btn-secondary btn-large" onclick="togglePause();closeMoreSheet()">☕ Пауза / Возобновить</button><button class="btn btn-secondary btn-large" style="color:#FF3B30" onclick="exitMaster();closeMoreSheet()">Выйти</button><button class="btn btn-primary btn-large" onclick="closeMoreSheet()">Закрыть</button></div></div>
+
+<div class="qr-modal" id="qrModal" onclick="if(event.target===this) closeQrModal()"><div class="qr-box"><div style="font-weight:800;font-size:18px;margin-bottom:12px">QR код заведения</div><img id="qrImage" style="width:100%;border-radius:16px" src=""><div id="qrLink" style="margin-top:12px;font-size:12px;word-break:break-all;color:var(--text-2)"></div><button class="btn btn-primary btn-medium" style="margin-top:16px" onclick="closeQrModal()">Закрыть</button></div></div>
+
+<div class="loud-modal" id="loudModal">
+  <div class="loud-box">
+    <div class="loud-bell">🔔</div>
+    <div class="loud-title">ВАША ОЧЕРЕДЬ!</div>
+    <div class="loud-sub" id="loudSub">Мастер ждет вас</div>
+    <div class="loud-master" id="loudMaster">Мастер: Арсен</div>
+    <div class="loud-progress"><div class="loud-progress-bar"></div></div>
+    <button class="btn btn-primary loud-btn" onclick="dismissLoudNotification()">Я ИДУ! 🏃‍♂️</button>
+    <div class="loud-hint">Звук + вибрация остановятся после нажатия</div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const API_BASE = (() => {
+  const saved = localStorage.getItem('kezek_api_url');
+  if(saved) return saved.replace(/\/$/,'');
+  const isGitHub = window.location.hostname.includes('github.io');
+  if(isGitHub){
+    const urlParams = new URLSearchParams(window.location.search);
+    const apiParam = urlParams.get('api');
+    if(apiParam){
+      const cleaned = decodeURIComponent(apiParam).replace(/\/$/,'');
+      localStorage.setItem('kezek_api_url', cleaned);
+      return cleaned;
+    }
+    return null;
+  }
+  return window.location.origin + '/api';
+})();
+function getEffectiveApiBase(){
+  const saved = localStorage.getItem('kezek_api_url');
+  if(saved) return saved.replace(/\/$/,'');
+  if(API_BASE) return API_BASE;
+  return null;
+}
+function saveApiUrl(){
+  const v = document.getElementById('apiUrlInput').value.trim();
+  if(!v){ alert('Вставь URL'); return; }
+  let url = v;
+  if(!url.endsWith('/api')) url = url.replace(/\/$/,'') + '/api';
+  localStorage.setItem('kezek_api_url', url);
+  document.getElementById('apiStatus').textContent = 'Сохранено: ' + url + ' - перезагружаю...';
+  setTimeout(()=>location.reload(), 600);
+}
+async function checkApiConnection(){
+  const api = getEffectiveApiBase();
+  const settingsEl = document.getElementById('apiSettings');
+  const inputEl = document.getElementById('apiUrlInput');
+  if(!api){
+    if(settingsEl) settingsEl.style.display = 'block';
+    return false;
+  }
+  try{
+    const res = await fetch(api.replace('/api','/health'), {method:'GET'});
+    if(res.ok){
+      if(settingsEl) settingsEl.style.display = 'none';
+      return true;
+    }
+  }catch(e){}
+  if(settingsEl){
+    settingsEl.style.display = 'block';
+    document.getElementById('apiStatus').textContent = '⚠️ Сервер не отвечает: ' + api;
+    if(inputEl && !inputEl.value) inputEl.value = api;
+  }
+  return false;
+}
+
+let deferredPrompt = null;
+let wakeLock = null;
+function checkPWAInstalled(){
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const installedFlag = localStorage.getItem('kezek_pwa_installed') === 'true';
+  return standalone || installedFlag;
+}
+function showPWAGateIfNeeded(){
+  const isStandalone = checkPWAInstalled();
+  const skip = localStorage.getItem('kezek_skip_pwa') === 'true';
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const gate = document.getElementById('pwaGate');
+  if (!isStandalone && !skip){
+    gate.classList.add('open');
+    if (isIOS){
+      document.getElementById('iosInstructions').style.display='block';
+      document.getElementById('pwaInstallBtn').style.display='none';
+    }
+  } else {
+    gate.classList.remove('open');
+  }
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('pwaInstallBtn');
+  if (btn){ btn.textContent = '📲 Установить kezek'; btn.style.display='flex'; }
+});
+async function installPWA(){
+  if (deferredPrompt){
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted'){
+      localStorage.setItem('kezek_pwa_installed','true');
+      document.getElementById('pwaGate').classList.remove('open');
+      requestNotificationPermission();
+    }
+    deferredPrompt = null;
+  } else {
+    showManualInstall();
+  }
+}
+function showManualInstall(){
+  alert('Чтобы установить:\n\nChrome/Edge: меню ⋮ → Установить приложение / Добавить на главный экран\n\niPhone: Поделиться ⎙ → На экран "Домой" → Добавить\n\nПосле установки открой с главного экрана');
+}
+function continueWithoutPWA(){
+  if (confirm('⚠️ Без установки ты можешь пропустить очередь! Продолжить?')){
+    localStorage.setItem('kezek_skip_pwa','true');
+    document.getElementById('pwaGate').classList.remove('open');
+  }
+}
+window.addEventListener('appinstalled', () => {
+  localStorage.setItem('kezek_pwa_installed','true');
+  localStorage.removeItem('kezek_skip_pwa');
+  document.getElementById('pwaGate').classList.remove('open');
+  requestNotificationPermission();
+});
+if ('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(r=>console.log('SW registered',r.scope)).catch(e=>console.log('SW fail',e));
+}
+function generate8DigitCode(){ return Math.floor(10000000 + Math.random()*90000000).toString(); }
+function getOrCreateClientCode(){
+  let code = localStorage.getItem('kezek_client_code');
+  if (!code || !/^\d{8}$/.test(code)){
+    code = generate8DigitCode();
+    localStorage.setItem('kezek_client_code', code);
+  }
+  return code;
+}
+function getOrCreateMasterCode(){
+  let code = localStorage.getItem('kezek_master_code');
+  if (!code || !/^\d{8}$/.test(code)){
+    code = generate8DigitCode();
+    localStorage.setItem('kezek_master_code', code);
+  }
+  return code;
+}
+function getClientName(){ return localStorage.getItem('kezek_client_name') || ''; }
+function getMasterNameLocal(){ return localStorage.getItem('kezek_master_name') || ''; }
+function ensureClientName(forcePrompt=false){
+  let name = getClientName();
+  if (name && name.trim().length>=1 && !forcePrompt) return name.trim().slice(0,30);
+  const inputEl = document.getElementById('clientNameInput');
+  if (inputEl && inputEl.value && inputEl.value.trim().length>=1){
+    name = inputEl.value.trim().slice(0,30);
+    localStorage.setItem('kezek_client_name', name);
+    return name;
+  }
+  if (forcePrompt){
+    const entered = prompt('Как вас записать? Введите имя для очереди:','');
+    if (entered && entered.trim().length>=1){
+      name = entered.trim().slice(0,30);
+      localStorage.setItem('kezek_client_name', name);
+      if (inputEl) inputEl.value = name;
+      return name;
+    }
+  }
+  return null;
+}
+let audioCtx = null;
+let alarmOscs = [];
+let isAlarmPlaying = false;
+let alarmInterval = null;
+let vibrateInterval = null;
+async function requestWakeLock(){
+  try{
+    if ('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch(e){}
+}
+function releaseWakeLock(){ if (wakeLock){ try{ wakeLock.release(); }catch{} wakeLock=null; } }
+async function requestNotificationPermission(){
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default'){
+    await Notification.requestPermission();
+  }
+  await requestWakeLock();
+  if (navigator.vibrate) navigator.vibrate(100);
+}
+function playImpossibleAlarm(){
+  if (isAlarmPlaying) return;
+  isAlarmPlaying = true;
+  requestWakeLock();
+  try{
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const playTone = (freq, t, dur, type='square') => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime + t);
+      gain.gain.setValueAtTime(0, audioCtx.currentTime + t);
+      gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + t + 0.02);
+      gain.gain.setValueAtTime(0.9, audioCtx.currentTime + t + dur - 0.05);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + t + dur);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime + t);
+      osc.stop(audioCtx.currentTime + t + dur + 0.1);
+      alarmOscs.push(osc);
+    };
+    const loopPattern = () => {
+      if (!isAlarmPlaying) return;
+      alarmOscs = [];
+      playTone(1200, 0, 0.25);
+      playTone(1200, 0.3, 0.25);
+      playTone(1200, 0.6, 0.5);
+      playTone(900, 1.2, 0.25);
+      playTone(900, 1.5, 0.25);
+      playTone(900, 1.8, 0.5);
+      playTone(1500, 2.5, 0.8, 'sine');
+      alarmInterval = setTimeout(loopPattern, 3500);
+    };
+    loopPattern();
+  } catch(e){}
+  if (navigator.vibrate){
+    const vibrateLoop = () => {
+      if (!isAlarmPlaying) return;
+      navigator.vibrate([600,200,600,200,1000,200,600,200,600]);
+      vibrateInterval = setTimeout(vibrateLoop, 3000);
+    };
+    vibrateLoop();
+  }
+}
+function stopImpossibleAlarm(){
+  isAlarmPlaying = false;
+  if (alarmInterval) clearTimeout(alarmInterval);
+  if (vibrateInterval) clearTimeout(vibrateInterval);
+  alarmOscs.forEach(o=>{ try{o.stop();}catch{} });
+  alarmOscs=[];
+  if (audioCtx){ try{ audioCtx.close(); }catch{} audioCtx=null; }
+  if (navigator.vibrate) navigator.vibrate(0);
+  releaseWakeLock();
+}
+function showSystemNotification(title, body){
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try{
+    const n = new Notification(title, {body: body, icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='black'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='900' font-size='42' fill='white'>kezek</text></svg>", tag: 'kezek-queue-call', renotify: true, requireInteraction: true, silent: false, vibrate: [500,200,500,200,1000]});
+    n.onclick = () => { window.focus(); n.close(); dismissLoudNotification(); };
+  } catch(e){}
+}
+function triggerLoudNotification({masterName, establishmentName}){
+  const modal = document.getElementById('loudModal');
+  document.getElementById('loudSub').textContent = establishmentName ? `Заведение: ${establishmentName}` : 'Ваша очередь подошла!';
+  document.getElementById('loudMaster').textContent = masterName ? `Мастер: ${masterName} ждет вас!` : 'Мастер ждет вас!';
+  modal.classList.add('open');
+  playImpossibleAlarm();
+  showSystemNotification('🔔 ВАША ОЧЕРЕДЬ! kezek', `${masterName ? 'Мастер '+masterName+' ждет вас' : 'Ваша очередь подошла!'} - ${establishmentName||''}`);
+}
+function dismissLoudNotification(){
+  stopImpossibleAlarm();
+  document.getElementById('loudModal').classList.remove('open');
+  document.getElementById('statusTitle').textContent = 'Идите к мастеру!';
+  document.getElementById('statusInfo').innerHTML = '🔔 Мастер вызвал вас.<br>Подойдите сейчас.';
+}
+let currentView='view-home';
+let viewStack=[];
+let html5Qr=null;
+let scanning=false;
+let lastEstId=null;
+let selectedMasterId=null;
+let selectedDate=null;
+let selectedWeekday=null;
+let timeContext='tomorrow';
+let curMonth=new Date();
+let currentEstablishment=null;
+let currentMaster=null;
+let createData={ service_type:'', business_name:'', avg_time:30, password:'' };
+let joinData={ est_name:'', password:'', master_name:'' };
+let statusPollInterval = null;
+let currentQueueItemId = null;
+const SERVICE_TEMPLATES=["Барбершоп","Маникюр","Стоматология","Автосервис","Салон красоты","Массаж","Ресторан","Фитнес","Тату-салон"];
+const TIME_TEMPLATES=["15","20","30","40","60","90"];
+const TIME_MAP={morning:{h:9,m:0,label:'09:00'},day:{h:13,m:0,label:'13:00'},noon:{h:15,m:0,label:'15:00'},evening:{h:18,m:0,label:'18:00'},late:{h:20,m:30,label:'20:30'}};
+function showView(id){
+  if(currentView===id) return;
+  if(currentView==='view-scanner' && id!=='view-scanner'){ stopCamera(); }
+  if(currentView!==id){ viewStack.push(currentView); }
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const target=document.getElementById(id);
+  if(target) target.classList.add('active');
+  currentView=id;
+  window.scrollTo(0,0);
+  if(id==='view-scanner'){ setTimeout(()=>{ startCamera(); }, 300); }
+  if(id==='view-history') renderHistory();
+  updateCodeBadges();
+}
+function goBack(){
+  if(currentView==='view-scanner'){ stopCamera(); }
+  const prev=viewStack.pop()||'view-home';
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(prev).classList.add('active');
+  currentView=prev;
+  if(currentView==='view-scanner'){ setTimeout(()=>startCamera(),300); }
+}
+function goBackFromTime(){
+  if(timeContext==='weekday') showView('view-weekday');
+  else if(timeContext==='calendar') showView('view-calendar');
+  else showView('view-future');
+}
+function updateCodeBadges(){
+  const clientCode = getOrCreateClientCode();
+  const clientName = getClientName();
+  const badge = document.getElementById('clientCodeBadge');
+  if (badge){ badge.textContent = clientName ? `${clientName} • ${clientCode}` : `Твой код: ${clientCode}`; }
+  const mBadge = document.getElementById('masterCodeBadge');
+  const mCode = localStorage.getItem('kezek_master_code');
+  const mName = localStorage.getItem('kezek_master_name');
+  if (mBadge){ if (mCode) mBadge.textContent = mName ? `${mName} • ${mCode}` : `Код: ${mCode}`; else mBadge.textContent = 'Код создастся при входе'; }
+}
+function setStatus(t){ document.getElementById('scan-status').textContent=t; }
+function toggleAltOptions(){
+  const el=document.getElementById('altOptions');
+  el.style.display=el.style.display==='none'||el.style.display===''?'flex':'none';
+}
+function goClient(){ 
+  if(!getEffectiveApiBase()){
+    document.getElementById('apiSettings').style.display='block';
+    alert('Сначала введи URL сервера (телефон через serveo)');
+    return;
+  }
+  showView('view-scanner'); 
+}
+async function startCamera(){
+  if(scanning) return;
+  const readerEl=document.getElementById('reader');
+  if(!readerEl) return;
+  if(!html5Qr) html5Qr=new Html5Qrcode('reader',{verbose:false});
+  setStatus('Запускаю камеру...');
+  document.getElementById('scanBtn').textContent='Остановить';
+  try{
+    await html5Qr.start({facingMode:'environment'},{fps:10,qrbox:{width:250,height:250}},onScanSuccess,()=>{});
+    scanning=true;
+    setStatus('Наведите на QR код заведения');
+  }catch(e){
+    setStatus('Ошибка камеры: '+e.message);
+    document.getElementById('scanBtn').textContent='Сканировать';
+  }
+}
+async function stopCamera(){
+  if(html5Qr && scanning){
+    try{ await html5Qr.stop(); }catch{}
+  }
+  scanning=false;
+  const btn=document.getElementById('scanBtn');
+  if(btn) btn.textContent='Сканировать';
+  setStatus('Камера остановлена.');
+}
+function toggleCamera(){ if(scanning) stopCamera(); else startCamera(); }
+let fileScanInProgress=false;
+function openGallery(){ document.getElementById('galleryInput').click(); }
+async function handleGalleryFile(input){
+  const file=input.files?.[0];
+  if(!file) return;
+  if(fileScanInProgress) return;
+  fileScanInProgress=true;
+  setStatus('📷 Читаю фото...');
+  if(scanning && html5Qr){
+    try{ await html5Qr.stop(); }catch{}
+    scanning=false;
+  }
+  try{
+    let tempId='reader-file';
+    let tempEl=document.getElementById(tempId);
+    if(!tempEl){ tempEl=document.createElement('div'); tempEl.id=tempId; tempEl.style.display='none'; document.body.appendChild(tempEl); }
+    const fileQr=new Html5Qrcode(tempId,{verbose:false});
+    const decoded=await fileQr.scanFile(file, false);
+    await fileQr.clear();
+    onScanSuccess(decoded);
+    return;
+  }catch(e){
+    if('BarcodeDetector' in window){
+      try{
+        const detector=new BarcodeDetector({formats:['qr_code']});
+        const bitmap=await createImageBitmap(file);
+        const codes=await detector.detect(bitmap);
+        if(codes && codes.length>0){ onScanSuccess(codes[0].rawValue); return; }
+      }catch{}
+    }
+    setStatus('❌ QR не найден на фото.');
+  }finally{
+    input.value=''; fileScanInProgress=false;
+  }
+}
+function extractEstId(data){
+  if(!data) return null;
+  data=data.trim();
+  let m=data.match(/est_(\d+)/i); if(m) return parseInt(m[1]);
+  m=data.match(/start(?:app)?=est_(\d+)/i); if(m) return parseInt(m[1]);
+  m=data.match(/\/est_(\d+)/i); if(m) return parseInt(m[1]);
+  if(/^\d+$/.test(data)) return parseInt(data);
+  try{ const o=JSON.parse(data); if(o.est_id) return parseInt(o.est_id); if(o.establishment_id) return parseInt(o.establishment_id); if(o.qr_data) return extractEstId(String(o.qr_data)); }catch{}
+  return null;
+}
+function onScanSuccess(decoded){
+  const estId=extractEstId(decoded);
+  if(!estId){ setStatus('ID заведения не найден в QR'); return; }
+  lastEstId=estId;
+  localStorage.setItem('kezek_est_id',estId);
+  stopCamera();
+  addToHistory({id:estId,name:`Заведение ${estId}`,service_type:'Загрузка...'});
+  loadEstablishment(estId);
+}
+function handleLinkInput(){
+  const v=document.getElementById('linkInput').value.trim();
+  if(!v){ setStatus('Вставьте ссылку'); return; }
+  onScanSuccess(v);
+}
+async function loadEstablishment(estId){
+  const api = getEffectiveApiBase();
+  if(!api){ alert('Сначала настрой сервер'); return; }
+  document.getElementById('estTitle').textContent=`Загрузка...`;
+  document.getElementById('mastersList').innerHTML=`<div style="display:flex;justify-content:center;padding:20px"><div class="loader"></div></div>`;
+  showView('view-est');
+  try{
+    const res=await fetch(`${api}/establishments/${estId}`);
+    if(!res.ok) throw new Error('Заведение не найдено');
+    const est=await res.json();
+    currentEstablishment=est;
+    document.getElementById('estTitle').textContent=est.name;
+    document.getElementById('estInfo').style.display='block';
+    document.getElementById('estInfo').innerHTML=`<div style="font-weight:700">${est.name}</div><div style="font-size:13px;color:var(--text-2);margin-top:4px">${est.service_type} • ~${est.avg_time} мин</div>`;
+    updateHistoryName(estId, est.name, est.service_type);
+    setTimeout(()=>{
+      const inp=document.getElementById('clientNameInput');
+      if(inp){
+        const existing=getClientName();
+        if(existing) inp.value=existing;
+        inp.addEventListener('change',()=>{
+          const v=inp.value.trim();
+          if(v){ localStorage.setItem('kezek_client_name', v.slice(0,30)); updateCodeBadges(); }
+        });
+      }
+    },100);
+    const mastersRes=await fetch(`${api}/establishments/${estId}/masters`);
+    if(!mastersRes.ok) throw new Error('Ошибка загрузки мастеров');
+    const masters=await mastersRes.json();
+    const list=document.getElementById('mastersList');
+    list.innerHTML='';
+    if(!masters.length){
+      list.innerHTML=`<div class="empty">Пока нет мастеров в этом заведении</div>`;
+      document.getElementById('bookingType').style.display='none';
+      return;
+    }
+    masters.forEach(m=>{
+      const d=document.createElement('div');
+      d.className='master-card';
+      const loadText = m.is_paused ? 'На паузе' : (m.waiting_count===0 ? 'Свободен' : `${m.waiting_count} в очереди ~${m.load_minutes} мин`);
+      d.innerHTML=`<div class="master-left"><div class="person-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 16c0-3 2.7-5.5 6-5.5S16 13 16 16" stroke-linecap="round"/></svg></div><div class="dot ${m.is_paused?'dot-orange':'dot-green'}" style="margin-left:2px"></div><div><div class="master-name">${m.name}</div><div class="master-meta">${m.is_paused ? (m.pause_reason||'Пауза') : ''}</div></div></div><div class="master-queue">${loadText}</div>`;
+      d.onclick=()=>{
+        selectedMasterId=m.id;
+        document.getElementById('bookingType').style.display='block';
+        list.querySelectorAll('.master-card').forEach(x=>{ x.style.borderColor='var(--border)'; x.style.background='var(--card)'; });
+        d.style.borderColor='var(--text)';
+        d.style.background='var(--btn-secondary)';
+      };
+      list.appendChild(d);
+    });
+    document.getElementById('bookingType').style.display='none';
+  }catch(e){
+    document.getElementById('mastersList').innerHTML=`<div class="empty">❌ ${e.message}</div>`;
+    document.getElementById('estTitle').textContent=`Ошибка`;
+    setStatus('Ошибка: '+e.message);
+  }
+}
+async function bookNearest(){
+  const api = getEffectiveApiBase();
+  if(!currentEstablishment){ alert('Сначала выберите заведение'); return; }
+  const clientName=ensureClientName(true);
+  if(!clientName){ alert('Введите имя для записи'); return; }
+  const clientCode=getOrCreateClientCode();
+  const payload={establishment_id: currentEstablishment.id, client_nickname: clientName.slice(0,50), client_code: clientCode, master_id: selectedMasterId || null};
+  try{
+    const res=await fetch(`${api}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||'Ошибка');
+    currentQueueItemId=data.queue_item_id;
+    document.getElementById('statusTitle').textContent='Вы в очереди';
+    document.getElementById('statusInfo').innerHTML=`Мастер: <b>${data.master_name}</b><br>Перед вами: ${data.people_ahead} чел<br>~${data.estimated_minutes} мин<br><span style="font-size:13px;margin-top:8px;display:block">${data.fun_text||''}</span><br><br><span class="code-badge">Твой код: ${clientCode} • ${clientName}</span>`;
+    document.getElementById('statusLive').style.display='block';
+    document.getElementById('statusLive').innerHTML=`🔔 Держи приложение открытым<br>Когда подойдет очередь - разбудим громким звуком + вибрацией`;
+    showView('view-status');
+    requestNotificationPermission();
+    startClientPolling(clientCode, currentEstablishment.id);
+  }catch(e){ alert('❌ '+e.message); }
+}
+function selectTomorrow(){ timeContext='tomorrow'; selectedDate=new Date(); selectedDate.setDate(selectedDate.getDate()+1); document.getElementById('timeTitle').textContent='Завтра, во сколько?'; showView('view-time'); }
+function selectWeekday(wd){ selectedWeekday=wd; timeContext='weekday'; document.getElementById('timeTitle').textContent=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'][wd]+', во сколько?'; showView('view-time'); }
+function showCalendar(){ timeContext='calendar'; renderCalendar(); showView('view-calendar'); }
+let calSelected=null;
+function renderCalendar(){
+  const y=curMonth.getFullYear(), m=curMonth.getMonth();
+  document.getElementById('calMonth').textContent=new Date(y,m).toLocaleString('ru-RU',{month:'long',year:'numeric'});
+  const first=new Date(y,m,1); const start=(first.getDay()+6)%7; const daysInMonth=new Date(y,m+1,0).getDate();
+  const daysDiv=document.getElementById('calDays'); daysDiv.innerHTML='';
+  for(let i=0;i<start;i++){ const d=document.createElement('div'); d.className='cal-day other'; daysDiv.appendChild(d); }
+  const today=new Date();
+  for(let d=1;d<=daysInMonth;d++){
+    const el=document.createElement('div'); el.className='cal-day'; el.textContent=d;
+    if(y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate()) el.classList.add('today');
+    el.onclick=()=>{
+      daysDiv.querySelectorAll('.cal-day').forEach(x=>x.classList.remove('selected'));
+      el.classList.add('selected'); calSelected=new Date(y,m,d); selectedDate=calSelected;
+      document.getElementById('calTimeBlock').style.display='block';
+    };
+    daysDiv.appendChild(el);
+  }
+}
+function changeMonth(dir){ curMonth.setMonth(curMonth.getMonth()+dir); calSelected=null; document.getElementById('calTimeBlock').style.display='none'; renderCalendar(); }
+function getNextWeekday(wd){
+  const now=new Date(); let diff=(wd-now.getDay()+7)%7; if(diff===0) diff=7; const d=new Date(now); d.setDate(now.getDate()+diff); return d;
+}
+async function bookTime(key){
+  const api = getEffectiveApiBase();
+  const t=TIME_MAP[key];
+  let finalDate;
+  if(timeContext==='tomorrow'){ finalDate=new Date(); finalDate.setDate(finalDate.getDate()+1); finalDate.setHours(t.h,t.m,0,0); }
+  else if(timeContext==='weekday'){ finalDate=getNextWeekday(selectedWeekday); finalDate.setHours(t.h,t.m,0,0); }
+  else if(timeContext==='calendar'){ if(!selectedDate){ alert('Выберите дату'); return; } finalDate=new Date(selectedDate); finalDate.setHours(t.h,t.m,0,0); }
+  if(!currentEstablishment){ alert('Нет заведения'); return; }
+  if(finalDate < new Date()){ alert('Нельзя записаться на прошедшее время'); return; }
+  const clientName=ensureClientName(true);
+  if(!clientName){ alert('Введите имя'); return; }
+  const clientCode=getOrCreateClientCode();
+  const payload={establishment_id: currentEstablishment.id, client_nickname: clientName.slice(0,50), client_code: clientCode, master_id: selectedMasterId||null, scheduled_time: finalDate.toISOString()};
+  try{
+    const res=await fetch(`${api}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||'Ошибка');
+    currentQueueItemId=data.queue_item_id;
+    document.getElementById('statusTitle').textContent='Запись создана';
+    document.getElementById('statusInfo').innerHTML=`${finalDate.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}<br>Мастер: <b>${data.master_name}</b><br><span class="code-badge">${clientCode} • ${clientName}</span>`;
+    showView('view-status');
+    requestNotificationPermission();
+    startClientPolling(clientCode, currentEstablishment.id);
+  }catch(e){ alert('❌ '+e.message); }
+}
+function startClientPolling(clientCode, estId){
+  if (statusPollInterval) clearInterval(statusPollInterval);
+  statusPollInterval = setInterval(async ()=>{
+    const api = getEffectiveApiBase();
+    if(!api) return;
+    try{
+      const res = await fetch(`${api}/client/${clientCode}/status?establishment_id=${estId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const inChair = data.find(d=> d.status==='in_chair');
+      if (inChair){
+        clearInterval(statusPollInterval);
+        triggerLoudNotification({masterName: inChair.master_name, establishmentName: inChair.establishment_name});
+        document.getElementById('statusLive').innerHTML = `🔔 <b>ВАША ОЧЕРЕДЬ!</b><br>Мастер ${inChair.master_name} ждет вас!`;
+        return;
+      }
+      const waiting = data.find(d=> d.status==='waiting');
+      if (waiting){
+        const live = document.getElementById('statusLive');
+        if (live) live.innerHTML = `Перед вами: ${waiting.people_ahead} чел<br>~${waiting.estimated_minutes} мин<br>Оставайся в приложении - разбудим! 🔔`;
+      }
+    } catch(e){}
+  }, 4000);
+}
+async function cancelMyBooking(){
+  const api = getEffectiveApiBase();
+  const clientCode = getOrCreateClientCode();
+  if (!currentQueueItemId){ alert('Нет активной записи'); return; }
+  if (!confirm('Отменить запись?')) return;
+  try{
+    const res = await fetch(`${api}/client/cancel?client_code=${clientCode}&queue_item_id=${currentQueueItemId}`, {method:'POST'});
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail||'Ошибка');
+    alert('Запись отменена');
+    if (statusPollInterval) clearInterval(statusPollInterval);
+    showView('view-home');
+  } catch(e){ alert('❌ '+e.message); }
+}
+async function handleSpecialistEntry(){
+  const api = getEffectiveApiBase();
+  if(!api){ document.getElementById('apiSettings').style.display='block'; alert('Сначала введи URL сервера'); return; }
+  const masterCode = getOrCreateMasterCode();
+  try{
+    const res=await fetch(`${api}/master/login?master_code=${masterCode}`,{method:'POST'});
+    const data=await res.json();
+    if(data.is_master){
+      openMasterPanel({id:data.master_id, master_code: masterCode, name:data.master_name, establishment_id:data.establishment_id, est_name:'', is_paused:data.is_paused, pause_reason:data.pause_reason, avg_time:30});
+      return;
+    }
+  }catch(e){}
+  showView('view-specialist-choice');
+  updateCodeBadges();
+}
+function showCreateFlow(){
+  createData={service_type:'',business_name:'',avg_time:30,password:''};
+  document.getElementById('serviceStep').style.display='block';
+  document.getElementById('nameStep').style.display='none';
+  document.getElementById('timeStep').style.display='none';
+  document.getElementById('passwordStep').style.display='none';
+  const grid=document.getElementById('serviceGrid');
+  grid.innerHTML='';
+  SERVICE_TEMPLATES.forEach(s=>{
+    const b=document.createElement('button'); b.className='btn btn-secondary'; b.style.height='56px'; b.style.borderRadius='14px'; b.textContent=s;
+    b.onclick=()=>{ createData.service_type=s; showNameStep(); };
+    grid.appendChild(b);
+  });
+  const other=document.createElement('button'); other.className='btn btn-secondary'; other.style.height='56px'; other.style.gridColumn='span 2'; other.textContent='Другое ✏️';
+  other.onclick=()=>{ document.getElementById('customService').style.display='block'; };
+  grid.appendChild(other);
+  showView('view-specialist-join');
+}
+function submitCustomService(){
+  const v=document.getElementById('customServiceInput').value.trim();
+  if(!v) return alert('Введите услугу');
+  createData.service_type=v;
+  showNameStep();
+}
+function showNameStep(){
+  document.getElementById('serviceStep').style.display='none';
+  document.getElementById('customService').style.display='none';
+  document.getElementById('nameStep').style.display='block';
+}
+function submitBusinessName(){
+  const v=document.getElementById('businessNameInput').value.trim();
+  if(v.length<2) return alert('Минимум 2 символа');
+  createData.business_name=v;
+  showTimeStep();
+}
+function showTimeStep(){
+  document.getElementById('nameStep').style.display='none';
+  document.getElementById('timeStep').style.display='block';
+  const grid=document.getElementById('timeGrid');
+  grid.innerHTML='';
+  TIME_TEMPLATES.forEach(t=>{
+    const b=document.createElement('button'); b.className='btn btn-secondary'; b.style.height='56px'; b.textContent=`${t} мин`;
+    b.onclick=()=>{ createData.avg_time=parseInt(t); showPasswordStep(); };
+    grid.appendChild(b);
+  });
+}
+function showPasswordStep(){
+  document.getElementById('timeStep').style.display='none';
+  document.getElementById('passwordStep').style.display='block';
+}
+async function createBusiness(){
+  const api = getEffectiveApiBase();
+  const pass=document.getElementById('estPassInput').value.trim();
+  if(!/^\d{4}$/.test(pass)) return alert('Пароль 4 цифры');
+  createData.password=pass;
+  const masterCode=getOrCreateMasterCode();
+  let masterName=getMasterNameLocal();
+  if (!masterName || masterName.length<2){
+    masterName=prompt('Твое имя как мастера (ярлык для клиентов):','')||'Мастер';
+    localStorage.setItem('kezek_master_name', masterName.slice(0,30));
+  }
+  const payload={name: createData.business_name, service_type: createData.service_type, avg_service_time_minutes: createData.avg_time, password: createData.password, owner_code: masterCode, owner_name: masterName, service_description: `Тип: ${createData.service_type}, время: ${createData.avg_time} мин`};
+  const btn=document.getElementById('createBusinessBtn');
+  btn.innerHTML='<div class="loader"></div>'; btn.disabled=true;
+  try{
+    const res=await fetch(`${api}/establishments/create`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||'Ошибка создания');
+    localStorage.setItem('kezek_est_id', data.establishment_id);
+    localStorage.setItem('kezek_is_master','true');
+    const joinPayload={establishment_name: data.name, password: pass, master_code: masterCode, name: masterName};
+    const joinRes=await fetch(`${api}/master/join`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(joinPayload)});
+    const joinData=await joinRes.json();
+    if(joinRes.ok){
+      localStorage.setItem('kezek_master_id', joinData.master_id);
+      openMasterPanel({id:joinData.master_id, master_code: masterCode, name:masterName, establishment_id:data.establishment_id, est_name:data.name, is_paused:false});
+      setTimeout(()=>getQR(),500);
+    }else{
+      alert(`Бизнес создан! ID: ${data.establishment_id}\nТеперь войдите как мастер`);
+      showJoinFlow();
+    }
+  }catch(e){ alert('❌ '+e.message); }finally{ btn.textContent='Создать бизнес'; btn.disabled=false; }
+}
+function showJoinFlow(){
+  joinData={est_name:'',password:'',master_name:''};
+  document.getElementById('joinStep1').style.display='block';
+  document.getElementById('joinStep2').style.display='none';
+  document.getElementById('joinStep3').style.display='none';
+  showView('view-join-master');
+  const existingName=getMasterNameLocal();
+  if (existingName) document.getElementById('joinMasterName').value=existingName;
+}
+function submitJoinEstName(){
+  const v=document.getElementById('joinEstName').value.trim();
+  if(v.length<2) return alert('Введите название');
+  joinData.est_name=v;
+  document.getElementById('joinStep1').style.display='none';
+  document.getElementById('joinStep2').style.display='block';
+}
+function submitJoinEstPass(){
+  const v=document.getElementById('joinEstPass').value.trim();
+  if(!/^\d{4}$/.test(v)) return alert('4 цифры');
+  joinData.password=v;
+  document.getElementById('joinStep2').style.display='none';
+  document.getElementById('joinStep3').style.display='block';
+  const existing=getMasterNameLocal();
+  if (existing) document.getElementById('joinMasterName').value=existing;
+}
+async function submitJoinMaster(){
+  const api = getEffectiveApiBase();
+  const v=document.getElementById('joinMasterName').value.trim();
+  if(v.length<2) return alert('Минимум 2 символа');
+  joinData.master_name=v;
+  localStorage.setItem('kezek_master_name', v.slice(0,30));
+  const masterCode=getOrCreateMasterCode();
+  const payload={establishment_name: joinData.est_name, password: joinData.password, master_code: masterCode, name: v};
+  try{
+    const res=await fetch(`${api}/master/join`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||'Ошибка');
+    localStorage.setItem('kezek_master_id', data.master_id);
+    localStorage.setItem('kezek_is_master','true');
+    localStorage.setItem('kezek_est_id', data.establishment_id);
+    openMasterPanel({id:data.master_id, master_code: masterCode, name:v, establishment_id:data.establishment_id, est_name:data.establishment_name, is_paused:false});
+  }catch(e){ alert('❌ '+e.message); }
+}
+async function openMasterPanel(m){
+  currentMaster=m;
+  document.getElementById('masterName').textContent=m.name;
+  document.getElementById('masterHeader').textContent=m.name;
+  document.getElementById('masterStatus').textContent=m.is_paused ? ('На паузе: '+(m.pause_reason||'')) : 'Активен и принимает клиентов';
+  document.getElementById('masterDot').className='dot '+(m.is_paused?'dot-orange':'dot-green');
+  document.getElementById('masterEstName').textContent=m.est_name ? `Заведение: ${m.est_name} • ID ${m.establishment_id||''}` : `ID заведения: ${m.establishment_id||localStorage.getItem('kezek_est_id')||''}`;
+  document.getElementById('masterCodeDisplay').textContent=`Код: ${m.master_code}`;
+  document.getElementById('clientList').innerHTML=`<div style="display:flex;justify-content:center;padding:20px"><div class="loader"></div></div>`;
+  showView('view-master');
+  await loadQueue();
+  await loadBlocked();
+}
+async function loadQueue(){
+  const api = getEffectiveApiBase();
+  if(!currentMaster) return;
+  const estId=currentMaster.establishment_id || localStorage.getItem('kezek_est_id');
+  if(!estId) return;
+  try{
+    const res=await fetch(`${api}/establishments/${estId}/queue`);
+    if(!res.ok) throw new Error('Ошибка очереди');
+    const items=await res.json();
+    const myItems=items.filter(i=> i.master_id==currentMaster.id);
+    const list=document.getElementById('clientList');
+    list.innerHTML='';
+    if(!myItems.length){
+      list.innerHTML=`<div class="empty">Очередь пуста</div>`;
+      return;
+    }
+    myItems.forEach(c=>{
+      const d=document.createElement('div'); d.className='queue-item';
+      const statusMap={waiting:'ожидает',prebooked:'предзапись',in_chair:'в кресле'};
+      const timeStr=c.scheduled_time ? new Date(c.scheduled_time).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}) : '';
+      d.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><div class="person-icon" style="width:26px;height:26px"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 16c0-3 2.7-5.5 6-5.5S16 13 16 16" stroke-linecap="round"/></svg></div><div><div style="font-weight:700">${c.client_nickname} <span style="font-weight:400;color:var(--text-2);font-size:11px">${c.client_code}</span></div><div style="font-size:12px;color:var(--text-2)">${statusMap[c.status]||c.status} ${timeStr}</div></div></div><div style="display:flex;gap:6px"><button class="btn btn-secondary" style="width:36px;height:36px;border-radius:10px" onclick="blockClient('${c.client_code_full}','${c.client_nickname.replace(/'/g, "\\'")}')">🚫</button></div>`;
+      list.appendChild(d);
+    });
+  }catch(e){ document.getElementById('clientList').innerHTML=`<div class="empty">❌ ${e.message}</div>`; }
+}
+async function loadBlocked(){
+  const api = getEffectiveApiBase();
+  if(!currentMaster) return;
+  const estId=currentMaster.establishment_id || localStorage.getItem('kezek_est_id');
+  try{
+    const res=await fetch(`${api}/establishments/${estId}/blocked?master_code=${currentMaster.master_code}`);
+    if(!res.ok) return;
+    const blocked=await res.json();
+    const wrap=document.getElementById('blockedListWrap');
+    const list=document.getElementById('blockedList');
+    if(!blocked.length){ wrap.style.display='none'; return; }
+    wrap.style.display='block';
+    list.innerHTML='';
+    blocked.forEach(b=>{
+      const d=document.createElement('div'); d.className='queue-item';
+      const exp=new Date(b.expires_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      d.innerHTML=`<div><div style="font-weight:700">${b.client_nickname} <span style="font-size:11px;color:var(--text-2)">${b.client_code}</span></div><div style="font-size:11px;color:var(--text-2)">До ${exp} • ${b.reason||''}</div></div><button class="btn btn-secondary" style="width:auto;height:32px;padding:0 10px;border-radius:8px;font-size:12px" onclick="unblockClient('${b.client_code}')">Разблок</button>`;
+      list.appendChild(d);
+    });
+  }catch{}
+}
+async function nextClient(){
+  const api = getEffectiveApiBase();
+  if(!currentMaster) return;
+  const btn=document.querySelector('#view-master .btn-primary');
+  if(!btn) return;
+  btn.classList.remove('btn-next-anim'); void btn.offsetWidth; btn.classList.add('btn-next-anim');
+  const count=14;
+  for(let i=0;i<count;i++){
+    const el=document.createElement('div'); const isRect=i%2===0; el.className='confetti-piece '+(isRect?'rect':'circle');
+    const angle=(i/count)*360+(Math.random()*30-15); const dist=80+Math.random()*70;
+    const x=Math.cos(angle*Math.PI/180)*dist; const y=Math.sin(angle*Math.PI/180)*dist-20; const rot=Math.random()*720-360;
+    el.style.setProperty('--x',x+'px'); el.style.setProperty('--y',y+'px'); el.style.setProperty('--r',rot+'deg');
+    el.style.animation=`confetti-fly ${0.7+Math.random()*0.4}s cubic-bezier(0.25,0.46,0.45,0.94) forwards`;
+    el.style.left='50%'; el.style.top='50%'; btn.appendChild(el); setTimeout(()=>el.remove(),1200);
+  }
+  setTimeout(()=>btn.classList.remove('btn-next-anim'),800);
+  try{
+    const res=await fetch(`${api}/master/next`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({master_code: currentMaster.master_code})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||data.message||'Ошибка');
+    await loadQueue();
+  }catch(e){ alert('❌ '+e.message); }
+}
+function openMoreSheet(){ document.getElementById('overlay').classList.add('open'); document.getElementById('moreSheet').classList.add('open'); }
+function closeMoreSheet(){ document.getElementById('overlay').classList.remove('open'); document.getElementById('moreSheet').classList.remove('open'); }
+function getQR(){
+  const api = getEffectiveApiBase();
+  const estId=currentMaster?.establishment_id || localStorage.getItem('kezek_est_id') || '1';
+  const frontBase = window.location.origin + window.location.pathname.replace('scanner.html','');
+  const urlForQr = `${frontBase}scanner.html?est_id=${estId}${api ? '&api='+encodeURIComponent(api) : ''}`;
+  const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(urlForQr)}`;
+  document.getElementById('qrImage').src=qrUrl;
+  document.getElementById('qrLink').innerHTML=`<div style="margin-bottom:6px"><b>Ссылка:</b> ${urlForQr}</div><div style="font-size:11px">Распечатай и повесь на стойку. Клиенты сканируют и сразу попадают в очередь.<br>В QR уже зашит твой serveo адрес.</div>`;
+  document.getElementById('qrModal').classList.add('open');
+}
+function closeQrModal(){ document.getElementById('qrModal').classList.remove('open'); }
+async function togglePause(){
+  const api = getEffectiveApiBase();
+  if(!currentMaster) return;
+  const isPaused=document.getElementById('masterDot').classList.contains('dot-orange');
+  try{
+    if(isPaused){
+      const res=await fetch(`${api}/master/resume`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({master_code: currentMaster.master_code})});
+      if(!res.ok) throw new Error('Ошибка');
+      document.getElementById('masterStatus').textContent='Активен и принимает клиентов';
+      document.getElementById('masterDot').className='dot dot-green';
+      currentMaster.is_paused=false;
+    }else{
+      const reason=prompt('Причина паузы?','Перерыв 10 мин')||'Пауза';
+      const res=await fetch(`${api}/master/pause`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({master_code: currentMaster.master_code, reason})});
+      if(!res.ok) throw new Error('Ошибка');
+      document.getElementById('masterStatus').textContent='На паузе: '+reason;
+      document.getElementById('masterDot').className='dot dot-orange';
+      currentMaster.is_paused=true;
+    }
+  }catch(e){ alert('❌ '+e.message); }
+}
+function exitMaster(){
+  if (statusPollInterval) clearInterval(statusPollInterval);
+  currentMaster=null;
+  showView('view-home');
+}
+async function blockClient(clientCode, clientNickname){
+  const api = getEffectiveApiBase();
+  if (!currentMaster) return;
+  const reason = prompt(`Заблокировать ${clientNickname} (${clientCode}) на 3 дня? Причина:`, 'Не пришел') || 'Блокировка';
+  const estId = currentMaster.establishment_id || localStorage.getItem('kezek_est_id');
+  try{
+    const res=await fetch(`${api}/client/block`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({establishment_id: parseInt(estId), master_code: currentMaster.master_code, client_code: clientCode, reason})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||'Ошибка');
+    await loadQueue();
+    await loadBlocked();
+  }catch(e){ alert('❌ '+e.message); }
+}
+async function unblockClient(clientCode){
+  const api = getEffectiveApiBase();
+  if (!currentMaster) return;
+  const estId = currentMaster.establishment_id || localStorage.getItem('kezek_est_id');
+  try{
+    const res=await fetch(`${api}/client/unblock?establishment_id=${estId}&master_code=${currentMaster.master_code}&client_code=${clientCode}`,{method:'DELETE'});
+    if(!res.ok) throw new Error('Ошибка');
+    await loadBlocked();
+  }catch(e){ alert('❌ '+e.message); }
+}
+function addToHistory(item){
+  if(localStorage.getItem('kezek_incognito')==='true') return;
+  let hist=JSON.parse(localStorage.getItem('kezek_history')||'[]');
+  hist=hist.filter(h=>h.id!==item.id);
+  hist.unshift({...item,visited_at:new Date().toISOString()});
+  hist=hist.slice(0,20);
+  localStorage.setItem('kezek_history',JSON.stringify(hist));
+}
+function updateHistoryName(id,name,service){
+  let hist=JSON.parse(localStorage.getItem('kezek_history')||'[]');
+  hist=hist.map(h=> h.id===id ? {...h, name, service_type:service} : h);
+  localStorage.setItem('kezek_history',JSON.stringify(hist));
+}
+function renderHistory(){
+  const list=document.getElementById('historyList');
+  const hist=JSON.parse(localStorage.getItem('kezek_history')||'[]');
+  if(hist.length===0){ list.innerHTML='<div class="empty">История пуста</div>'; return; }
+  list.innerHTML='';
+  hist.forEach(h=>{
+    const d=document.createElement('div'); d.className='card'; d.style.marginBottom='10px';
+    d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700">${h.name}</div><div style="font-size:12px;color:var(--text-2)">${h.service_type} • ${new Date(h.visited_at).toLocaleDateString('ru-RU')}</div></div><button class="btn btn-primary" style="width:auto;padding:0 14px;height:36px;border-radius:10px;font-size:13px" onclick="loadEstablishment(${h.id})">Снова</button></div>`;
+    list.appendChild(d);
+  });
+}
+function toggleIncognito(){
+  const cur=localStorage.getItem('kezek_incognito')==='true';
+  localStorage.setItem('kezek_incognito',!cur);
+  document.getElementById('incognitoBtn').textContent=!cur?'👁 Инкогнито вкл':'🕶 Инкогнито';
+}
+function clearHistory(){ localStorage.removeItem('kezek_history'); renderHistory(); }
+renderHistory();
+if(localStorage.getItem('kezek_incognito')==='true'){ document.getElementById('incognitoBtn').textContent='👁 Инкогнито вкл'; }
+showPWAGateIfNeeded();
+updateCodeBadges();
+setTimeout(()=>checkApiConnection(), 800);
+(function handleStartParam(){
+  let estId=null;
+  const urlParams=new URLSearchParams(window.location.search);
+  const s=urlParams.get('est_id')||urlParams.get('est')||urlParams.get('id');
+  if(s) estId=extractEstId(s);
+  if(estId){ setTimeout(()=>loadEstablishment(estId), 800); }
+})();
+document.addEventListener('click', function firstInteraction(){
+  try{
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    ac.createBufferSource().start();
+    ac.close();
+  }catch{}
+  document.removeEventListener('click', firstInteraction);
+}, {once:true});
+</script>
+</body>
+</html>
