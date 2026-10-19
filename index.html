@@ -6,22 +6,41 @@
 <title>Сканер QR — Kezek</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: #0f172a; color: #e2e8f0;
     display: flex; align-items: center; justify-content: center;
-    min-height: 100vh; margin: 0; padding: 16px;
-    text-align: center;
+    min-height: 100vh; padding: 16px; text-align: center;
   }
-  .box { max-width: 360px; }
+  .box { max-width: 360px; width: 100%; }
   h1 { font-size: 20px; margin-bottom: 12px; }
-  p { font-size: 15px; color: #94a3b8; }
+  p { font-size: 15px; color: #94a3b8; margin-bottom: 8px; }
+  code { background: #1e293b; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+  input {
+    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155;
+    background: #1e293b; color: #e2e8f0; font-size: 15px; margin: 8px 0;
+  }
+  button {
+    width: 100%; padding: 12px; border-radius: 8px; border: none;
+    background: #22c55e; color: white; font-size: 16px;
+    cursor: pointer; font-weight: 600;
+  }
+  .hidden { display: none; }
 </style>
 </head>
 <body>
 <div class="box">
-  <h1>📷 Сканер QR</h1>
-  <p>Открываю камеру Telegram…</p>
+  <div id="status">
+    <h1>📷 Открываю камеру…</h1>
+    <p>Наведите на QR-код заведения</p>
+  </div>
+  <div id="manual" class="hidden">
+    <h1>⌨️ Ввести вручную</h1>
+    <p>Ссылка или ID заведения:</p>
+    <input id="manualInput" type="text" placeholder="https://t.me/... или 1">
+    <button onclick="sendManual()">Отправить</button>
+  </div>
 </div>
 <script>
   const tg = window.Telegram.WebApp;
@@ -37,39 +56,78 @@
     return null;
   }
 
-  function sendAndClose(bid) {
+  function showManual() {
+    document.getElementById('status').classList.add('hidden');
+    document.getElementById('manual').classList.remove('hidden');
+  }
+
+  function sendManual() {
+    const val = document.getElementById('manualInput').value.trim();
+    const bid = parseBusinessId(val);
+    if (!bid) {
+      alert('Не нашёл ID заведения. Проверьте ссылку или число.');
+      return;
+    }
     try {
       tg.sendData(JSON.stringify({ business_id: bid }));
     } catch (e) {
-      document.body.innerHTML =
-        '<div class="box"><h1>⚠️ Ошибка</h1><p>' + e + '</p></div>';
+      alert('Ошибка отправки: ' + e.message);
     }
   }
 
-  if (typeof tg.showScanQrPopup === 'function') {
+  let scannedBid = null;
+  let sendAttempted = false;
+
+  function trySend() {
+    if (!scannedBid || sendAttempted) return;
+    sendAttempted = true;
+    try {
+      tg.sendData(JSON.stringify({ business_id: scannedBid }));
+    } catch (e) {
+      document.getElementById('status').innerHTML =
+        '<h1>⚠️ Ошибка</h1>' +
+        '<p>Не удалось отправить: ' + e.message + '</p>' +
+        '<p>Пришлите в чат вручную: <code>' + scannedBid + '</code></p>';
+    }
+  }
+
+  if (typeof tg.showScanQrPopup !== 'function') {
+    document.getElementById('status').innerHTML =
+      '<h1>⚠️ Не поддерживается</h1>' +
+      '<p>Обновите Telegram или введите вручную</p>';
+    showManual();
+  } else {
+    // 1. Открываем нативный сканер
     tg.showScanQrPopup(
       { text: "Наведите камеру на QR-код заведения" },
       function (data) {
         const bid = parseBusinessId(data);
         if (bid) {
-          sendAndClose(bid);
-          return true;
+          scannedBid = bid;
+          return true;  // закрываем сканер, отправка — ниже по событию
         }
-        return false;
+        return false;  // не наш QR — продолжаем сканировать
       }
     );
+
+    // 2. Когда сканер закрылся — отправляем данные боту
     tg.onEvent('scanQrPopupClosed', function () {
-      document.querySelector('.box').innerHTML =
-        '<h1>📷 Сканер закрыт</h1>' +
-        '<p>Если QR не распознался — вернитесь в чат с ботом ' +
-        'и пришлите ссылку или ID заведения вручную.</p>';
+      if (scannedBid) {
+        // даём WebApp «проснуться» после закрытия попапа
+        setTimeout(trySend, 100);
+      } else {
+        document.getElementById('status').innerHTML =
+          '<h1>📷 Сканер закрыт</h1>' +
+          '<p>QR не распознан.</p>';
+        showManual();
+      }
     });
-  } else {
-    document.querySelector('.box').innerHTML =
-      '<h1>⚠️ Не поддерживается</h1>' +
-      '<p>Обновите Telegram до последней версии ' +
-      'или пришлите ссылку на заведение в чат с ботом.</p>';
   }
+
+  // 3. Fallback: если через 30 сек ничего не произошло — ручной ввод
+  setTimeout(function () {
+    if (!scannedBid && !sendAttempted) showManual();
+  }, 30000);
 </script>
 </body>
 </html>
