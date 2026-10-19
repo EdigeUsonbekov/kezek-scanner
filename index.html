@@ -46,7 +46,6 @@
     }
   }
 
-  // Нативный сканер Telegram — работает на iOS и Android
   if (typeof tg.showScanQrPopup === 'function') {
     tg.showScanQrPopup(
       { text: "Наведите камеру на QR-код заведения" },
@@ -54,12 +53,11 @@
         const bid = parseBusinessId(data);
         if (bid) {
           sendAndClose(bid);
-          return true; // закрыть нативный сканер
+          return true;
         }
-        return false; // продолжить сканирование
+        return false;
       }
     );
-    // Если пользователь закрыл сканер — покажем подсказку
     tg.onEvent('scanQrPopupClosed', function () {
       document.querySelector('.box').innerHTML =
         '<h1>📷 Сканер закрыт</h1>' +
