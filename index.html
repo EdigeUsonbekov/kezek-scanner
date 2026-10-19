@@ -13,9 +13,9 @@
     display: flex; align-items: center; justify-content: center;
     min-height: 100vh; padding: 16px; text-align: center;
   }
-  .box { max-width: 360px; width: 100%; }
+  .box { max-width: 380px; width: 100%; }
   h1 { font-size: 20px; margin-bottom: 12px; }
-  p { font-size: 15px; color: #94a3b8; margin-bottom: 8px; }
+  p { font-size: 15px; color: #94a3b8; margin-bottom: 10px; }
   code { background: #1e293b; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
   input {
     width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155;
@@ -24,8 +24,9 @@
   button {
     width: 100%; padding: 12px; border-radius: 8px; border: none;
     background: #22c55e; color: white; font-size: 16px;
-    cursor: pointer; font-weight: 600;
+    cursor: pointer; font-weight: 600; margin-top: 8px;
   }
+  button.secondary { background: #475569; }
   .hidden { display: none; }
 </style>
 </head>
@@ -34,6 +35,11 @@
   <div id="status">
     <h1>📷 Открываю камеру…</h1>
     <p>Наведите на QR-код заведения</p>
+  </div>
+  <div id="success" class="hidden">
+    <h1>✅ QR распознан</h1>
+    <p>Отправляю в чат…</p>
+    <button class="secondary" onclick="sendAgain()">Отправить ещё раз</button>
   </div>
   <div id="manual" class="hidden">
     <h1>⌨️ Ввести вручную</h1>
@@ -47,6 +53,8 @@
   tg.ready();
   tg.expand();
 
+  let scannedBid = null;
+
   function parseBusinessId(text) {
     if (!text) return null;
     const m = String(text).match(/[?&]start=(\d+)/);
@@ -56,78 +64,72 @@
     return null;
   }
 
-  function showManual() {
-    document.getElementById('status').classList.add('hidden');
-    document.getElementById('manual').classList.remove('hidden');
+  function showScreen(id) {
+    ['status', 'success', 'manual'].forEach(function(s) {
+      document.getElementById(s).classList.add('hidden');
+    });
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function sendBid(bid) {
+    try {
+      tg.sendData(JSON.stringify({ business_id: bid }));
+      return true;
+    } catch (e) {
+      return e.message || String(e);
+    }
+  }
+
+  function sendAgain() {
+    if (!scannedBid) return;
+    const r = sendBid(scannedBid);
+    if (r !== true) {
+      document.getElementById('success').innerHTML =
+        '<h1>⚠️ Ошибка</h1>' +
+        '<p>Не удалось: ' + r + '</p>' +
+        '<p>Пришлите ID вручную: <code>' + scannedBid + '</code></p>' +
+        '<button onclick="showScreen(\'manual\')">Ввести вручную</button>';
+    }
   }
 
   function sendManual() {
     const val = document.getElementById('manualInput').value.trim();
     const bid = parseBusinessId(val);
     if (!bid) {
-      alert('Не нашёл ID заведения. Проверьте ссылку или число.');
+      alert('Не нашёл ID. Проверьте ссылку или число.');
       return;
     }
-    try {
-      tg.sendData(JSON.stringify({ business_id: bid }));
-    } catch (e) {
-      alert('Ошибка отправки: ' + e.message);
-    }
-  }
-
-  let scannedBid = null;
-  let sendAttempted = false;
-
-  function trySend() {
-    if (!scannedBid || sendAttempted) return;
-    sendAttempted = true;
-    try {
-      tg.sendData(JSON.stringify({ business_id: scannedBid }));
-    } catch (e) {
-      document.getElementById('status').innerHTML =
-        '<h1>⚠️ Ошибка</h1>' +
-        '<p>Не удалось отправить: ' + e.message + '</p>' +
-        '<p>Пришлите в чат вручную: <code>' + scannedBid + '</code></p>';
+    const r = sendBid(bid);
+    if (r !== true) {
+      alert('Ошибка отправки: ' + r);
     }
   }
 
   if (typeof tg.showScanQrPopup !== 'function') {
-    document.getElementById('status').innerHTML =
-      '<h1>⚠️ Не поддерживается</h1>' +
-      '<p>Обновите Telegram или введите вручную</p>';
-    showManual();
+    showScreen('manual');
   } else {
-    // 1. Открываем нативный сканер
     tg.showScanQrPopup(
       { text: "Наведите камеру на QR-код заведения" },
       function (data) {
         const bid = parseBusinessId(data);
-        if (bid) {
-          scannedBid = bid;
-          return true;  // закрываем сканер, отправка — ниже по событию
+        if (!bid) {
+          return false;
         }
-        return false;  // не наш QR — продолжаем сканировать
+        scannedBid = bid;
+        showScreen('success');
+        setTimeout(function() {
+          sendAgain();
+        }, 350);
+        return true;
       }
     );
 
-    // 2. Когда сканер закрылся — отправляем данные боту
-    tg.onEvent('scanQrPopupClosed', function () {
-      if (scannedBid) {
-        // даём WebApp «проснуться» после закрытия попапа
-        setTimeout(trySend, 100);
-      } else {
-        document.getElementById('status').innerHTML =
-          '<h1>📷 Сканер закрыт</h1>' +
-          '<p>QR не распознан.</p>';
-        showManual();
+    setTimeout(function() {
+      if (!scannedBid) {
+        showScreen('manual');
       }
-    });
+    }, 15000);
   }
-
-  // 3. Fallback: если через 30 сек ничего не произошло — ручной ввод
-  setTimeout(function () {
-    if (!scannedBid && !sendAttempted) showManual();
-  }, 30000);
 </script>
 </body>
 </html>
